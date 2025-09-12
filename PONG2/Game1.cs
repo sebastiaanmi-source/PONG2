@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using System;
 using System.Linq;
+using System.Security.Cryptography;
 
 class PONG2 : Game
 {
@@ -15,9 +16,10 @@ class PONG2 : Game
     Vector2 blauwePositie;
     Vector2 rodePositie;
     Vector2 balPositie;
-    Vector2 balSnelheid = new Vector2(1, -2);
-
-
+    Vector2 balSnelheid;
+    Random rnd = new Random();
+ 
+    
 
     [STAThread]
     static void Main()
@@ -33,6 +35,7 @@ class PONG2 : Game
 
         graphics.PreferredBackBufferWidth = 1200;
         graphics.PreferredBackBufferHeight = 600;
+
     }
 
     protected override void LoadContent()
@@ -47,6 +50,14 @@ class PONG2 : Game
 
         Bal = Content.Load<Texture2D>("bal");
         balPositie = new Vector2(graphics.PreferredBackBufferWidth / 2 - Bal.Width, graphics.PreferredBackBufferHeight / 2 - Bal.Height);
+
+        int[] ArrayX = { -2, 2 };
+        int rndArrayX = rnd.Next(0, 2);
+        int rndX = ArrayX[rndArrayX];
+        int[] ArrayY = {-3, -2, -1, 1, 2,3 };
+        int rndArrayY = rnd.Next(0, 2);
+        int rndY = ArrayY[rndArrayY];
+        balSnelheid = new Vector2(rndX, rndY);
     }
 
     public void SpelerInput()
@@ -80,11 +91,19 @@ class PONG2 : Game
     {
         //Balpositie door vector te maken en die de hele tijd bij elkaar op te tellen. Wanneer rand wordt geraakt door de bal wordt de Y component negatief en keert deze dus om
         balPositie += balSnelheid;
+        int getal = rnd.Next(-1, 2);
+
 
         if (balPositie.Y < 0 || balPositie.Y > 600 - Bal.Height)
         {
             balSnelheid.Y *= -1;
         }
+
+
+            {
+            balSnelheid.X *= -1;
+        }
+
     }
     protected override void Update(GameTime gameTime)
     {
@@ -93,7 +112,7 @@ class PONG2 : Game
         BalBeweging();
     }
 
-        
+
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.White);
