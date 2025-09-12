@@ -18,7 +18,9 @@ class PONG2 : Game
     Vector2 balPositie;
     Vector2 balSnelheid;
     Random rnd = new Random();
- 
+    Rectangle blauw;
+    Rectangle rood;
+    Rectangle balr;
     
 
     [STAThread]
@@ -86,30 +88,34 @@ class PONG2 : Game
             rodePositie.Y -= 5;
         }
     }
-
     public void BalBeweging()
     {
         //Balpositie door vector te maken en die de hele tijd bij elkaar op te tellen. Wanneer rand wordt geraakt door de bal wordt de Y component negatief en keert deze dus om
         balPositie += balSnelheid;
-        int getal = rnd.Next(-1, 2);
-
+w
+        blauw = new Rectangle((int)blauwePositie.X, (int)blauwePositie.Y, blauweSpeler.Width, blauweSpeler.Height);
+        rood = new Rectangle((int)rodePositie.X, (int)rodePositie.Y, rodeSpeler.Width, rodeSpeler.Height);
+        balr = new Rectangle((int)balPositie.X, (int)balPositie.Y, Bal.Width, Bal.Height);
 
         if (balPositie.Y < 0 || balPositie.Y > 600 - Bal.Height)
         {
             balSnelheid.Y *= -1;
         }
 
-
-            {
+        if (blauw.Intersects(balr) || rood.Intersects(balr))
+        {
             balSnelheid.X *= -1;
         }
-
     }
     protected override void Update(GameTime gameTime)
     {
     base.Update(gameTime);
         SpelerInput();
         BalBeweging();
+        Console.WriteLine("Bal X: " + balPositie.X + ", Y: " + balPositie.Y);
+        Console.WriteLine("Bal Bounds: " + Bal.Bounds);
+        Console.WriteLine("Blauwe speler Bounds: " + blauweSpeler.Bounds);
+        Console.WriteLine("Rode speler Bounds: " + rodeSpeler.Bounds);
     }
 
 
