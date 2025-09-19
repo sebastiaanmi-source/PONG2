@@ -291,6 +291,7 @@ class PONG2 : Game
                 spriteBatch.DrawString(Arial, "Druk op 'space' om opniew te beginnen", new Vector2(400, 300), Color.White);
                 spriteBatch.End();
             }
+            //rood heeft gewonnen
             else
             {
                 GraphicsDevice.Clear(Color.Red);
