@@ -6,7 +6,7 @@ using System;
 using System.Linq;
 using System.Security.Cryptography;
 
-enum Speltoestand {Startscherm, Spel, Einde}
+enum Speltoestand {Startscherm, Spel, Einde, Reset}
 class PONG2 : Game
 {
     GraphicsDeviceManager graphics;
@@ -79,13 +79,18 @@ class PONG2 : Game
     }   
     public Vector2 BalOrigin()
     {
-        int[] ArrayX = { -3, -2, 2, 3 };
-        int rndArrayX = rnd.Next(0, 3);
-        int rndX = ArrayX[rndArrayX];
-        int[] ArrayY = { -3, -2, -1, 1, 2, 3 };
-        int rndArrayY = rnd.Next(0, 5);
-        int rndY = ArrayY[rndArrayY];
-        return new Vector2(rndX, rndY);
+        int[] arrayX = { -1, 1 };
+        int rndX = arrayX[rnd.Next(0, 2)];
+
+        double Graden = rnd.Next(15, 46);
+        double Rad = Math.PI * Graden / 180;
+
+        float richting = 6f;
+
+        float startX = (float)(rndX * Math.Cos(Rad) * richting);
+        float startY = (float)(Math.Sin(Rad) * richting);
+
+        return new Vector2(startX, startY);
     }
 
     public void SpelerInput()
@@ -206,18 +211,29 @@ class PONG2 : Game
             levensrood();
             BalBeweging();
             
-            if (leven1B == null && leven2B == null && leven3B == null || leven1R == null && leven2R == null && leven3R == null)
+            if (leven3B == null || leven3R == null)
             {
                 FaseSpel = Speltoestand.Einde;
             }
         }
-// gaat hier wat fout, spel komt wel in eindtoestand, maar wanneer de space bar ingedrukt wordt gaat het naar de speltoestand, alleen gaat het alleen hierheen wanneer deze ingedrukt blijft, niet wanneer hij maar een keer wordt ingedrukt. Komt doordat de levens niet opnieuw getekent worden en hij dus constant denkt dat het spel voorbij is.
+
         else if (FaseSpel == Speltoestand.Einde)
         {
             if (state.IsKeyDown(Keys.Space))
             {
-                FaseSpel = Speltoestand.Spel;
+                FaseSpel = Speltoestand.Reset;
             }
+        }
+        else if (FaseSpel == Speltoestand.Reset)
+        {
+            leven1B = leven;
+            leven2B = leven;
+            leven3B = leven;
+            leven1R = leven;
+            leven2R = leven;
+            leven3R = leven;
+
+            FaseSpel = Speltoestand.Spel;
         }
     }
 
