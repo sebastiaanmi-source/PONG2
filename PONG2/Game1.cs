@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Input.Touch;
 using Microsoft.Xna.Framework.Media;
 using System;
 using System.Linq;
@@ -26,12 +27,16 @@ class PONG2 : Game
     Vector2 balPositie;
     Vector2 balSnelheid;
     Random rnd = new Random();
-    Rectangle blauwzijkant;
+    Rectangle bb;
+    Rectangle bm;
+    Rectangle bo;
     Rectangle blauwbovenkant;
     Rectangle blauwonderkant;
     Rectangle roodbovenkant;
     Rectangle roodonderkant;
-    Rectangle roodzijkant;
+    Rectangle rb;
+    Rectangle rm;
+    Rectangle ro;
     Rectangle balr;
     SpriteFont Arial;
     Speltoestand FaseSpel = Speltoestand.Startscherm; 
@@ -119,33 +124,69 @@ class PONG2 : Game
             rodePositie.Y -= 5;
         }
     }
-    public void BalBeweging()
+    public void BalBeweging() 
     {
         balPositie += balSnelheid;
-        blauwzijkant = new Rectangle((int)blauwePositie.X + blauweSpeler.Width, (int)blauwePositie.Y, 5, blauweSpeler.Height);
+        //float top = blauwePositie.Y;
+        //float hoogte = blauweSpeler.Height;
+        //float relatief = balPositie.Y - top;
+
+        //if (relatief < hoogte / 3)
+        //{
+        //    balSnelheid.X *= (float)-1.1;
+        //    balSnelheid = new Vector2(balSnelheid.X, -4);
+        //}
+        //else if (relatief >2 * hoogte / 3)
+        //{
+        //    balSnelheid.X *= (float)-1.1;
+        //    balSnelheid = new Vector2(balSnelheid.X, 4);
+        //}
+        //else
+        //{
+        //    balSnelheid.X *= (float)-1.1;
+        //}
+        //bm = blauwePositie.Y;
+        //bo = blauwePositie.Y;
+
+        bb = new Rectangle((int)blauwePositie.X + blauweSpeler.Width, (int)blauwePositie.Y, 5, blauweSpeler.Height / 3 - 1);
+        bm = new Rectangle((int)(blauwePositie.X) + blauweSpeler.Width, (int)blauwePositie.Y + blauweSpeler.Height / 3, 5, blauweSpeler.Height / 3 - 1);
+        bo = new Rectangle((int)(blauwePositie.X) + blauweSpeler.Width, (int)blauwePositie.Y + blauweSpeler.Height / 3 * 2, 5, blauweSpeler.Height / 3);
         blauwbovenkant = new Rectangle((int)blauwePositie.X, (int)blauwePositie.Y, blauweSpeler.Width, 5);
-        blauwonderkant = new Rectangle((int)blauwePositie.X, (int)blauwePositie.Y -5 + blauweSpeler.Height, blauweSpeler.Width, 5);
-        roodzijkant = new Rectangle((int)rodePositie.X, (int)rodePositie.Y, 5, rodeSpeler.Height);
+        blauwonderkant = new Rectangle((int)blauwePositie.X, (int)blauwePositie.Y - 5 + blauweSpeler.Height, blauweSpeler.Width, 5);
+        rb = new Rectangle((int)rodePositie.X, (int)rodePositie.Y, 5, rodeSpeler.Height / 3 - 1);
+        rm = new Rectangle((int)rodePositie.X, (int)rodePositie.Y + rodeSpeler.Height / 3, 5, rodeSpeler.Height / 3 - 1);
+        ro = new Rectangle((int)rodePositie.X, (int)rodePositie.Y + rodeSpeler.Height / 3 * 2, 5, rodeSpeler.Height / 3);
         roodbovenkant = new Rectangle((int)rodePositie.X, (int)rodePositie.Y, rodeSpeler.Width, 5);
-        roodonderkant = new Rectangle((int)rodePositie.X, (int)rodePositie.Y -5 + blauweSpeler.Height, rodeSpeler.Width, 5);
+        roodonderkant = new Rectangle((int)rodePositie.X, (int)rodePositie.Y - 5 + rodeSpeler.Height, rodeSpeler.Width, 5);
         balr = new Rectangle((int)balPositie.X, (int)balPositie.Y, Bal.Width, Bal.Height);
-//Balpositie door vector te maken en die de hele tijd bij elkaar op te tellen. Wanneer rand wordt geraakt door de bal wordt de Y component negatief en keert deze dus om
+        //Balpositie door vector te maken en die de hele tijd bij elkaar op te tellen.Wanneer rand wordt geraakt door de bal wordt de Y component negatief en keert deze dus om
 
         if (balPositie.Y < 0 || balPositie.Y > 600 - Bal.Height)
         {
             balSnelheid.Y *= -1;
         }
-// wanneer bal een speler raakt, x compononent omkeren en verhogen voor snelheid. Als de boven/onderkant geraakt wordt, naar boven of onder weerkaatsen. 
-        if (blauwzijkant.Intersects(balr) || roodzijkant.Intersects(balr))
+//bovenste gedeelte van de speler wordt geraakt, dus gaat op schuinere hoek omlaag.
+        if (bb.Intersects(balr) || rb.Intersects(balr))
         {
             balSnelheid.X *= (float)-1.1;
+            balSnelheid = new Vector2(balSnelheid.X, 4);
+        }
+//onderste gedeelte van de speler wordt geraakt, dus gaat op schuinere hoek omhoog.
+        if (bo.Intersects(balr) || ro.Intersects(balr))
+        {
+            balSnelheid.X *= (float)-1.1;
+            balSnelheid = new Vector2(balSnelheid.X, -4);
+        }
+// wanneer bal een speler raakt, x compononent omkeren en verhogen voor snelheid. Als de boven/onderkant geraakt wordt, naar boven of onder weerkaatsen. 
+        if (bm.Intersects(balr) || rm.Intersects(balr))
+        {
+            balSnelheid.X *= (float)-1.1;
+//boven of onderkant raken schiet de bal weer recht omhoog
         }
         if (blauwbovenkant.Intersects(balr) || blauwonderkant.Intersects(balr) || roodbovenkant.Intersects(balr) || roodonderkant.Intersects(balr))
         {
             balSnelheid.Y *= -1;
         }
-// als bal de wand raakt herstarten in het midden met nieuwe beginsnelheid
-
 
     }
     public void levensblauw()
@@ -241,13 +282,23 @@ class PONG2 : Game
     protected override void Draw(GameTime gameTime)
     {
         if (FaseSpel == Speltoestand.Startscherm)
-        {
-            GraphicsDevice.Clear(Color.Black);
-            spriteBatch.Begin();
-            spriteBatch.DrawString(Arial, "druk op 'space' om te beginnen!", new Vector2(500, 300), Color.White);
-            spriteBatch.End();
-        }
-        else if (FaseSpel == Speltoestand.Spel)
+            {
+                GraphicsDevice.Clear(Color.Black);
+                spriteBatch.Begin();
+                string message = "Press 'space' to start";
+                Vector2 textSize = Arial.MeasureString(message);
+
+                // Schermmidden is (1200/2, 600/2) = (600, 300)
+                Vector2 screenCenter = new Vector2(1200 / 2, 600 / 2);
+
+                // Trek de helft van de tekstgrootte af voor centreren
+                Vector2 position = screenCenter - textSize / 2;
+
+                spriteBatch.DrawString(Arial, message, position, Color.White);
+
+                spriteBatch.End();
+            }
+            else if (FaseSpel == Speltoestand.Spel)
         {
             GraphicsDevice.Clear(Color.White);
             spriteBatch.Begin();
@@ -287,8 +338,18 @@ class PONG2 : Game
             {
                 GraphicsDevice.Clear(Color.Blue);
                 spriteBatch.Begin();
-                spriteBatch.DrawString(Arial, "Blauw is de winnaar!", new Vector2(400, 200), Color.White);
-                spriteBatch.DrawString(Arial, "Druk op 'space' om opniew te beginnen", new Vector2(400, 300), Color.White);
+                string message1 = "Blauw is de winnaar!";
+                string message2 = "Druk op 'enter' om opnieuw te spelen";
+                Vector2 textSize1 = Arial.MeasureString(message1);
+                Vector2 textSize2 = Arial.MeasureString(message2);
+                Vector2 screenCenter = new Vector2(1200 / 2, 600 / 2);
+                Vector2 position1 = screenCenter - textSize1 / 2;
+                Vector2 position2 = new Vector2(screenCenter.X - textSize2.X / 2, position1.Y + textSize1.Y + 10);
+
+
+                spriteBatch.DrawString(Arial, message1, position1, Color.White);
+                spriteBatch.DrawString(Arial, message2, position2, Color.Green);
+
                 spriteBatch.End();
             }
             //rood heeft gewonnen
@@ -296,8 +357,18 @@ class PONG2 : Game
             {
                 GraphicsDevice.Clear(Color.Red);
                 spriteBatch.Begin();
-                spriteBatch.DrawString(Arial, "Rood is de winnaar!", new Vector2(400, 200), Color.White);
-                spriteBatch.DrawString(Arial, "Druk op 'space' om opniew te beginnen", new Vector2(400, 300), Color.White);
+                string message1 = "Rood is de winnaar!";
+                string message2 = "Druk op 'enter' om opnieuw te spelen";
+                Vector2 textSize1 = Arial.MeasureString(message1);
+                Vector2 textSize2 = Arial.MeasureString(message2);
+                Vector2 screenCenter = new Vector2(1200 / 2, 600 / 2);
+                Vector2 position1 = screenCenter - textSize1 / 2;
+                Vector2 position2 = new Vector2(screenCenter.X - textSize2.X / 2, position1.Y + textSize1.Y + 10);
+
+
+                spriteBatch.DrawString(Arial, message1, position1, Color.White);
+                spriteBatch.DrawString(Arial, message2, position2, Color.Yellow);
+
                 spriteBatch.End();
             }
         }
