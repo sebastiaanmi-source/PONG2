@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Input.Touch;
 using Microsoft.Xna.Framework.Media;
 using System;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Security.Cryptography;
 
 enum Speltoestand {Startscherm, Spel, Einde, Reset}
@@ -12,6 +13,8 @@ class PONG2 : Game
 {
     GraphicsDeviceManager graphics;
     SpriteBatch spriteBatch;
+    Random rnd = new Random();
+
     Texture2D blauweSpeler;
     Texture2D rodeSpeler;
     Texture2D Bal;
@@ -26,20 +29,31 @@ class PONG2 : Game
     Vector2 rodePositie;
     Vector2 balPositie;
     Vector2 balSnelheid;
-    Random rnd = new Random();
-    Rectangle bb;
-    Rectangle bm;
-    Rectangle bo;
+
+    Rectangle blauwzijkant;
     Rectangle blauwbovenkant;
     Rectangle blauwonderkant;
     Rectangle roodbovenkant;
     Rectangle roodonderkant;
-    Rectangle rb;
-    Rectangle rm;
-    Rectangle ro;
+    Rectangle roodzijkant;
     Rectangle balr;
     SpriteFont Arial;
-    Speltoestand FaseSpel = Speltoestand.Startscherm; 
+    Speltoestand FaseSpel = Speltoestand.Startscherm;
+    
+    Texture2D obst1;
+    Vector2 obstakelpositie1;
+    Vector2 Obstakelrichting1;
+    Rectangle obstakel1;
+
+    Texture2D obst2;
+    Vector2 obstakelpositie2;
+    Vector2 Obstakelrichting2;
+    Rectangle obstakel2;
+    Vector2 obstakelpositie3;
+    Vector2 Obstakelrichting3;
+    Rectangle obstakel3;
+
+    int count = 0;
 
     [STAThread]
     static void Main()
@@ -71,17 +85,20 @@ class PONG2 : Game
         Bal = Content.Load<Texture2D>("bal");
         balPositie = new Vector2(graphics.PreferredBackBufferWidth / 2 - Bal.Width, graphics.PreferredBackBufferHeight / 2 - Bal.Height);
         balSnelheid = BalOrigin();
-        leven = Content.Load<Texture2D>("life");
-        leven1B = Content.Load<Texture2D>("life");
-        leven2B = Content.Load<Texture2D>("life");
-        leven3B = Content.Load<Texture2D>("life");
+        leven = Content.Load<Texture2D>("heart");
 
-        leven1R = Content.Load<Texture2D>("heart");
-        leven2R = Content.Load<Texture2D>("heart");
-        leven3R = Content.Load<Texture2D>("heart");
+        obst1 = Content.Load<Texture2D>("rodeSpeler");
+        obst2 = Content.Load<Texture2D>("rodeSpeler");
+        obstakelpositie1 = new Vector2(graphics.PreferredBackBufferWidth / 2 - obst1.Width / 2, 0);
+        obstakelpositie2 = new Vector2(800-obst2.Width, graphics.PreferredBackBufferHeight-rodeSpeler.Height);
+        obstakelpositie3 = new Vector2(400, 0);
+        Obstakelrichting1 = new Vector2(0, 1);
+        Obstakelrichting2 = new Vector2(0, 2);
+        Obstakelrichting3 = new Vector2(0, 2);
 
         Arial = Content.Load<SpriteFont>("Arial");
     }   
+//Random nummer uit lijst kiezen en random hoek berekenen voor willekeurige start elke keer.
     public Vector2 BalOrigin()
     {
         int[] arrayX = { -1, 1 };
@@ -127,67 +144,119 @@ class PONG2 : Game
     public void BalBeweging() 
     {
         balPositie += balSnelheid;
-        //float top = blauwePositie.Y;
-        //float hoogte = blauweSpeler.Height;
-        //float relatief = balPositie.Y - top;
-
-        //if (relatief < hoogte / 3)
-        //{
-        //    balSnelheid.X *= (float)-1.1;
-        //    balSnelheid = new Vector2(balSnelheid.X, -4);
-        //}
-        //else if (relatief >2 * hoogte / 3)
-        //{
-        //    balSnelheid.X *= (float)-1.1;
-        //    balSnelheid = new Vector2(balSnelheid.X, 4);
-        //}
-        //else
-        //{
-        //    balSnelheid.X *= (float)-1.1;
-        //}
-        //bm = blauwePositie.Y;
-        //bo = blauwePositie.Y;
-
-        bb = new Rectangle((int)blauwePositie.X + blauweSpeler.Width, (int)blauwePositie.Y, 5, blauweSpeler.Height / 3 - 1);
-        bm = new Rectangle((int)(blauwePositie.X) + blauweSpeler.Width, (int)blauwePositie.Y + blauweSpeler.Height / 3, 5, blauweSpeler.Height / 3 - 1);
-        bo = new Rectangle((int)(blauwePositie.X) + blauweSpeler.Width, (int)blauwePositie.Y + blauweSpeler.Height / 3 * 2, 5, blauweSpeler.Height / 3);
         blauwbovenkant = new Rectangle((int)blauwePositie.X, (int)blauwePositie.Y, blauweSpeler.Width, 5);
         blauwonderkant = new Rectangle((int)blauwePositie.X, (int)blauwePositie.Y - 5 + blauweSpeler.Height, blauweSpeler.Width, 5);
-        rb = new Rectangle((int)rodePositie.X, (int)rodePositie.Y, 5, rodeSpeler.Height / 3 - 1);
-        rm = new Rectangle((int)rodePositie.X, (int)rodePositie.Y + rodeSpeler.Height / 3, 5, rodeSpeler.Height / 3 - 1);
-        ro = new Rectangle((int)rodePositie.X, (int)rodePositie.Y + rodeSpeler.Height / 3 * 2, 5, rodeSpeler.Height / 3);
         roodbovenkant = new Rectangle((int)rodePositie.X, (int)rodePositie.Y, rodeSpeler.Width, 5);
         roodonderkant = new Rectangle((int)rodePositie.X, (int)rodePositie.Y - 5 + rodeSpeler.Height, rodeSpeler.Width, 5);
         balr = new Rectangle((int)balPositie.X, (int)balPositie.Y, Bal.Width, Bal.Height);
-        //Balpositie door vector te maken en die de hele tijd bij elkaar op te tellen.Wanneer rand wordt geraakt door de bal wordt de Y component negatief en keert deze dus om
+
+
 
         if (balPositie.Y < 0 || balPositie.Y > 600 - Bal.Height)
         {
             balSnelheid.Y *= -1;
-        }
-//bovenste gedeelte van de speler wordt geraakt, dus gaat op schuinere hoek omlaag.
-        if (bb.Intersects(balr) || rb.Intersects(balr))
-        {
-            balSnelheid.X *= (float)-1.1;
-            balSnelheid = new Vector2(balSnelheid.X, 4);
-        }
-//onderste gedeelte van de speler wordt geraakt, dus gaat op schuinere hoek omhoog.
-        if (bo.Intersects(balr) || ro.Intersects(balr))
-        {
-            balSnelheid.X *= (float)-1.1;
-            balSnelheid = new Vector2(balSnelheid.X, -4);
-        }
-// wanneer bal een speler raakt, x compononent omkeren en verhogen voor snelheid. Als de boven/onderkant geraakt wordt, naar boven of onder weerkaatsen. 
-        if (bm.Intersects(balr) || rm.Intersects(balr))
-        {
-            balSnelheid.X *= (float)-1.1;
-//boven of onderkant raken schiet de bal weer recht omhoog
         }
         if (blauwbovenkant.Intersects(balr) || blauwonderkant.Intersects(balr) || roodbovenkant.Intersects(balr) || roodonderkant.Intersects(balr))
         {
             balSnelheid.Y *= -1;
         }
 
+    }
+    //zorg dat er een minimale angle is zodat de bal niet horizontaal kan gaan midden in het spel, nogal onhandig lmao
+    public void SpelerZijkant(Rectangle zijkant, Vector2 zijkantpositie, Texture2D Speler, Rectangle balr)
+    {
+        float balmidden = balr.Y + balr.Height / 2;
+
+        if (zijkant.Intersects(balr))
+        {
+            float Spelermidden = zijkantpositie.Y + (Speler.Height / 2);
+            float afstandmidden = Math.Abs((balmidden - Spelermidden)) / (Speler.Height / 2);
+            count++;
+            if (Math.Abs(balSnelheid.X) > 15)
+            {
+                balSnelheid.X *= -1;
+            }
+            else
+            {
+                balSnelheid.X *= -1.2f;
+            }
+
+            if (afstandmidden > 0.5)
+            {
+                balSnelheid.Y *= 1.15f;
+            }
+            else
+            {
+                balSnelheid.Y *= 0.9f;
+            }
+        }
+        //if (roodzijkant.Intersects(balr))
+
+        //{
+        //    count++;
+        //    float Spelermiddenr = rodePositie.Y + (rodeSpeler.Height / 2);
+        //    float afstandmiddenr = Math.Abs((balmidden - Spelermiddenr)) / (rodeSpeler.Height / 2);
+
+        //    if (Math.Abs(balSnelheid.X) > 10)
+        //    {
+        //        balSnelheid.X *= -1;
+        //    }
+        //    else
+        //    {
+        //        balSnelheid.X *= -1.1f;
+        //    }
+
+        //    if (afstandmiddenr > 0.5)
+        //    {
+        //        balSnelheid.Y *= 1.1f;
+        //    }
+        //    else
+        //    {
+        //        balSnelheid.Y *= 0.9f;
+        //    }
+        //}
+    }
+
+
+public void obstakelbeweging()
+    {
+        if (count > 9 && count <= 19)
+        {
+            obstakel1 = new Rectangle((int)obstakelpositie1.X, (int)obstakelpositie1.Y, obst1.Width, obst1.Height);
+            obstakelpositie1 += Obstakelrichting1;
+
+            if (obstakelpositie1.Y < 0 || obstakelpositie1.Y > graphics.PreferredBackBufferHeight - obst1.Height)
+                Obstakelrichting1.Y *= -1;
+
+            if (obstakel1.Intersects(balr))
+                balSnelheid.X *= -1;
+        }
+        else
+        {
+            obstakel1 = Rectangle.Empty;
+        }
+
+        if (count > 19)
+        {
+            obstakel2 = new Rectangle((int)obstakelpositie2.X, (int)obstakelpositie2.Y, obst2.Width, obst2.Height);
+            obstakel3 = new Rectangle((int)obstakelpositie3.X, (int)obstakelpositie3.Y, obst2.Width, obst2.Height);
+
+            obstakelpositie2 += Obstakelrichting2;
+            obstakelpositie3 += Obstakelrichting3;
+
+            if (obstakelpositie2.Y < 0 || obstakelpositie2.Y > graphics.PreferredBackBufferHeight - obst2.Height)
+                Obstakelrichting2.Y *= -1;
+            if (obstakelpositie3.Y < 0 || obstakelpositie3.Y > graphics.PreferredBackBufferHeight - obst2.Height)
+                Obstakelrichting3.Y *= -1;
+
+            if (obstakel2.Intersects(balr)|| obstakel3.Intersects(balr))
+                balSnelheid.X *= -1;
+        }
+        else
+        {
+            obstakel2 = Rectangle.Empty;
+            obstakel3 = Rectangle.Empty;
+        }
     }
     public void levensblauw()
     {
@@ -208,6 +277,7 @@ class PONG2 : Game
 
             balPositie = new Vector2(graphics.PreferredBackBufferWidth / 2 - Bal.Width, graphics.PreferredBackBufferHeight / 2 - Bal.Height);
             balSnelheid = BalOrigin();
+            count = 0;
         }
             
     }
@@ -231,11 +301,14 @@ class PONG2 : Game
 
             balPositie = new Vector2(graphics.PreferredBackBufferWidth / 2 - Bal.Width, graphics.PreferredBackBufferHeight / 2 - Bal.Height);
             balSnelheid = BalOrigin();
+            count = 0;
         }
 
     }
     protected override void Update(GameTime gameTime)
     {
+        blauwzijkant = new Rectangle((int)blauwePositie.X + blauweSpeler.Width, (int)blauwePositie.Y, 5, blauweSpeler.Height - 1);
+        roodzijkant = new Rectangle((int)rodePositie.X - 5, (int)rodePositie.Y + 1, rodeSpeler.Width, rodeSpeler.Height - 1);
         KeyboardState state = Keyboard.GetState();
         base.Update(gameTime);
         if (FaseSpel == Speltoestand.Startscherm)
@@ -251,7 +324,14 @@ class PONG2 : Game
             levensblauw();
             levensrood();
             BalBeweging();
-            
+            SpelerZijkant(blauwzijkant, blauwePositie, blauweSpeler, balr);
+            SpelerZijkant(roodzijkant, rodePositie, rodeSpeler, balr);
+
+            if (count > 9)
+            {
+                obstakelbeweging();
+            }
+
             if (leven3B == null || leven3R == null)
             {
                 FaseSpel = Speltoestand.Einde;
@@ -287,11 +367,7 @@ class PONG2 : Game
                 spriteBatch.Begin();
                 string message = "Press 'space' to start";
                 Vector2 textSize = Arial.MeasureString(message);
-
-                // Schermmidden is (1200/2, 600/2) = (600, 300)
                 Vector2 screenCenter = new Vector2(1200 / 2, 600 / 2);
-
-                // Trek de helft van de tekstgrootte af voor centreren
                 Vector2 position = screenCenter - textSize / 2;
 
                 spriteBatch.DrawString(Arial, message, position, Color.White);
@@ -302,12 +378,22 @@ class PONG2 : Game
         {
             GraphicsDevice.Clear(Color.White);
             spriteBatch.Begin();
+            spriteBatch.DrawString(Arial, count.ToString(), new Vector2(graphics.PreferredBackBufferWidth/2, 40), Color.Black);
             spriteBatch.Draw(blauweSpeler, blauwePositie, Color.White);
             spriteBatch.Draw(rodeSpeler, rodePositie, Color.White);
             spriteBatch.Draw(Bal, balPositie, Color.White);
+            if (count > 9)
+            {
+                spriteBatch.Draw(obst1, obstakel1, Color.White);
+            }
+            if (count > 19)
+            {
+                spriteBatch.Draw(obst2, obstakel2, Color.White);
+                spriteBatch.Draw(obst2, obstakel3, Color.White);
+            }
             if (leven1B != null)
             {
-                spriteBatch.Draw(leven, new Vector2(100, 50), Color.White);
+                spriteBatch.Draw(leven, new Vector2(110, 50), Color.White);
             }
             if (leven2B != null)
             {
@@ -315,19 +401,19 @@ class PONG2 : Game
             }
             if (leven3B != null)
             {
-                spriteBatch.Draw(leven, new Vector2(50, 50), Color.White);
+                spriteBatch.Draw(leven, new Vector2(40, 50), Color.White);
             }
             if (leven1R != null)
             {
-                spriteBatch.Draw(leven, new Vector2(1100, 50), Color.White);
+                spriteBatch.Draw(leven, new Vector2(1090 - leven.Width, 50), Color.White);
             }
             if (leven2R != null)
             {
-                spriteBatch.Draw(leven, new Vector2(1125, 50), Color.White);
+                spriteBatch.Draw(leven, new Vector2(1125 - leven.Width, 50), Color.White);
             }
             if (leven3R != null)
             {
-                spriteBatch.Draw(leven, new Vector2(1150, 50), Color.White);
+                spriteBatch.Draw(leven, new Vector2(1160 -leven.Width, 50), Color.White);
             }
             spriteBatch.End();
         }
@@ -339,7 +425,7 @@ class PONG2 : Game
                 GraphicsDevice.Clear(Color.Blue);
                 spriteBatch.Begin();
                 string message1 = "Blauw is de winnaar!";
-                string message2 = "Druk op 'enter' om opnieuw te spelen";
+                string message2 = "Druk op 'space' om opnieuw te spelen";
                 Vector2 textSize1 = Arial.MeasureString(message1);
                 Vector2 textSize2 = Arial.MeasureString(message2);
                 Vector2 screenCenter = new Vector2(1200 / 2, 600 / 2);
@@ -358,7 +444,7 @@ class PONG2 : Game
                 GraphicsDevice.Clear(Color.Red);
                 spriteBatch.Begin();
                 string message1 = "Rood is de winnaar!";
-                string message2 = "Druk op 'enter' om opnieuw te spelen";
+                string message2 = "Druk op 'space' om opnieuw te spelen";
                 Vector2 textSize1 = Arial.MeasureString(message1);
                 Vector2 textSize2 = Arial.MeasureString(message2);
                 Vector2 screenCenter = new Vector2(1200 / 2, 600 / 2);
