@@ -1,23 +1,35 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Input.Touch;
-using Microsoft.Xna.Framework.Media;
 using System;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Security.Cryptography;
 
 enum Speltoestand {Startscherm, Spel, Einde, Reset}
 class PONG2 : Game
 {
+    //misc
     GraphicsDeviceManager graphics;
     SpriteBatch spriteBatch;
     Random rnd = new Random();
-
+    SpriteFont Arial;
+    Speltoestand FaseSpel = Speltoestand.Startscherm;
+    Texture2D startscherm;
+//speler attributen
     Texture2D blauweSpeler;
     Texture2D rodeSpeler;
+    Vector2 blauwePositie;
+    Vector2 rodePositie;
+    Rectangle blauwzijkant;
+    Rectangle blauwbovenkant;
+    Rectangle blauwonderkant;
+    Rectangle roodbovenkant;
+    Rectangle roodonderkant;
+    Rectangle roodzijkant;
+// bal attributen
     Texture2D Bal;
+    Vector2 balPositie;
+    Vector2 balSnelheid;
+    Rectangle balr;
+// levens
     Texture2D leven;
     Texture2D leven1B;
     Texture2D leven2B;
@@ -25,26 +37,11 @@ class PONG2 : Game
     Texture2D leven1R;
     Texture2D leven2R;
     Texture2D leven3R;
-    Vector2 blauwePositie;
-    Vector2 rodePositie;
-    Vector2 balPositie;
-    Vector2 balSnelheid;
-
-    Rectangle blauwzijkant;
-    Rectangle blauwbovenkant;
-    Rectangle blauwonderkant;
-    Rectangle roodbovenkant;
-    Rectangle roodonderkant;
-    Rectangle roodzijkant;
-    Rectangle balr;
-    SpriteFont Arial;
-    Speltoestand FaseSpel = Speltoestand.Startscherm;
-    
+ //obstakel attributen  
     Texture2D obst1;
     Vector2 obstakelpositie1;
     Vector2 Obstakelrichting1;
     Rectangle obstakel1;
-
     Texture2D obst2;
     Vector2 obstakelpositie2;
     Vector2 Obstakelrichting2;
@@ -52,8 +49,8 @@ class PONG2 : Game
     Vector2 obstakelpositie3;
     Vector2 Obstakelrichting3;
     Rectangle obstakel3;
-
-    int count = 0;
+//start counter voor vordering spel
+    double count = 0;
 
     [STAThread]
     static void Main()
@@ -61,7 +58,6 @@ class PONG2 : Game
         PONG2 game = new PONG2();
         game.Run();
     }
-
     public PONG2()
     {
         Content.RootDirectory = "Content";
@@ -69,13 +65,12 @@ class PONG2 : Game
 
         graphics.PreferredBackBufferWidth = 1200;
         graphics.PreferredBackBufferHeight = 600;
-
     }
-
     protected override void LoadContent()
-    //inladen van alle sprites en de locatie van de spelers vaststellen zodat alles in het midden begint   
+    //inladen van alle sprites en locaties en de locatie van de spelers vaststellen zodat alles in het midden begint   
     {
         spriteBatch = new SpriteBatch(GraphicsDevice);
+        startscherm = Content.Load<Texture2D>("achtergrond");
         blauweSpeler = Content.Load<Texture2D>("blauweSpeler");
         blauwePositie = new Vector2(0, graphics.PreferredBackBufferHeight / 2 - blauweSpeler.Height / 2);
 
@@ -87,12 +82,12 @@ class PONG2 : Game
         balSnelheid = BalOrigin();
         leven = Content.Load<Texture2D>("heart");
 
-        obst1 = Content.Load<Texture2D>("rodeSpeler");
-        obst2 = Content.Load<Texture2D>("rodeSpeler");
+        obst1 = Content.Load<Texture2D>("obstakel");
+        obst2 = Content.Load<Texture2D>("obstakel");
         obstakelpositie1 = new Vector2(graphics.PreferredBackBufferWidth / 2 - obst1.Width / 2, 0);
         obstakelpositie2 = new Vector2(800-obst2.Width, graphics.PreferredBackBufferHeight-rodeSpeler.Height);
         obstakelpositie3 = new Vector2(400, 0);
-        Obstakelrichting1 = new Vector2(0, 1);
+        Obstakelrichting1 = new Vector2(0, 3);
         Obstakelrichting2 = new Vector2(0, 2);
         Obstakelrichting3 = new Vector2(0, 2);
 
@@ -114,13 +109,9 @@ class PONG2 : Game
 
         return new Vector2(startX, startY);
     }
-
     public void SpelerInput()
     {
-
 //Positie verandert door W en S in te drukken voor Blauwe Speler en checkt of speler zich op de rand bevindt
-
-        
         KeyboardState state = Keyboard.GetState();
         if (state.IsKeyDown(Keys.S) && blauwePositie.Y < graphics.PreferredBackBufferHeight - blauweSpeler.Height)
         {
@@ -130,7 +121,6 @@ class PONG2 : Game
         {
             blauwePositie.Y -= 5;
         }
-
 //Positie verandert door pijlte omhoog/omlaag voor rode speler  en checkt of speler zich op de rand bevindt   
         if (state.IsKeyDown(Keys.Down) && rodePositie.Y < graphics.PreferredBackBufferHeight - rodeSpeler.Height)
         {
@@ -143,26 +133,24 @@ class PONG2 : Game
     }
     public void BalBeweging() 
     {
+        blauwbovenkant = new Rectangle((int)blauwePositie.X, (int)blauwePositie.Y, blauweSpeler.Width-5, 5);
+        blauwonderkant = new Rectangle((int)blauwePositie.X, (int)blauwePositie.Y - 5 + blauweSpeler.Height, blauweSpeler.Width -5, 5);
+        roodbovenkant = new Rectangle((int)rodePositie.X, (int)rodePositie.Y, rodeSpeler.Width - 5, 5);
+        roodonderkant = new Rectangle((int)rodePositie.X, (int)rodePositie.Y - 5 + rodeSpeler.Height, rodeSpeler.Width -5, 5);
+   // positie van bal updaten en omdraaien als deze zijkant raakt boven en onder.
         balPositie += balSnelheid;
-        blauwbovenkant = new Rectangle((int)blauwePositie.X, (int)blauwePositie.Y, blauweSpeler.Width, 5);
-        blauwonderkant = new Rectangle((int)blauwePositie.X, (int)blauwePositie.Y - 5 + blauweSpeler.Height, blauweSpeler.Width, 5);
-        roodbovenkant = new Rectangle((int)rodePositie.X, (int)rodePositie.Y, rodeSpeler.Width, 5);
-        roodonderkant = new Rectangle((int)rodePositie.X, (int)rodePositie.Y - 5 + rodeSpeler.Height, rodeSpeler.Width, 5);
         balr = new Rectangle((int)balPositie.X, (int)balPositie.Y, Bal.Width, Bal.Height);
-
-
 
         if (balPositie.Y < 0 || balPositie.Y > 600 - Bal.Height)
         {
             balSnelheid.Y *= -1;
         }
+//als onderkant of bovenkant van paddle geraakt wordt, moet bal recht omhoog gaan ipv x omwdraaien.
         if (blauwbovenkant.Intersects(balr) || blauwonderkant.Intersects(balr) || roodbovenkant.Intersects(balr) || roodonderkant.Intersects(balr))
         {
             balSnelheid.Y *= -1;
         }
-
     }
-    //zorg dat er een minimale angle is zodat de bal niet horizontaal kan gaan midden in het spel, nogal onhandig lmao
     public void SpelerZijkant(Rectangle zijkant, Vector2 zijkantpositie, Texture2D Speler, Rectangle balr)
     {
         float balmidden = balr.Y + balr.Height / 2;
@@ -190,34 +178,7 @@ class PONG2 : Game
                 balSnelheid.Y *= 0.9f;
             }
         }
-        //if (roodzijkant.Intersects(balr))
-
-        //{
-        //    count++;
-        //    float Spelermiddenr = rodePositie.Y + (rodeSpeler.Height / 2);
-        //    float afstandmiddenr = Math.Abs((balmidden - Spelermiddenr)) / (rodeSpeler.Height / 2);
-
-        //    if (Math.Abs(balSnelheid.X) > 10)
-        //    {
-        //        balSnelheid.X *= -1;
-        //    }
-        //    else
-        //    {
-        //        balSnelheid.X *= -1.1f;
-        //    }
-
-        //    if (afstandmiddenr > 0.5)
-        //    {
-        //        balSnelheid.Y *= 1.1f;
-        //    }
-        //    else
-        //    {
-        //        balSnelheid.Y *= 0.9f;
-        //    }
-        //}
     }
-
-
 public void obstakelbeweging()
     {
         if (count > 9 && count <= 19)
@@ -278,10 +239,8 @@ public void obstakelbeweging()
             balPositie = new Vector2(graphics.PreferredBackBufferWidth / 2 - Bal.Width, graphics.PreferredBackBufferHeight / 2 - Bal.Height);
             balSnelheid = BalOrigin();
             count = 0;
-        }
-            
+        } 
     }
-
     public void levensrood()
     {
         if (balPositie.X > 1200)
@@ -303,7 +262,12 @@ public void obstakelbeweging()
             balSnelheid = BalOrigin();
             count = 0;
         }
-
+    }
+    public void DrawString(SpriteBatch spriteBatch, SpriteFont font, string text, Vector2 screenCenter, Color color)
+    {
+        Vector2 textSize = font.MeasureString(text);
+        Vector2 position = screenCenter - textSize / 2;
+        spriteBatch.DrawString(font, text, position, color);
     }
     protected override void Update(GameTime gameTime)
     {
@@ -357,21 +321,13 @@ public void obstakelbeweging()
             FaseSpel = Speltoestand.Spel;
         }
     }
-
-
     protected override void Draw(GameTime gameTime)
     {
         if (FaseSpel == Speltoestand.Startscherm)
             {
                 GraphicsDevice.Clear(Color.Black);
                 spriteBatch.Begin();
-                string message = "Press 'space' to start";
-                Vector2 textSize = Arial.MeasureString(message);
-                Vector2 screenCenter = new Vector2(1200 / 2, 600 / 2);
-                Vector2 position = screenCenter - textSize / 2;
-
-                spriteBatch.DrawString(Arial, message, position, Color.White);
-
+            spriteBatch.Draw(startscherm, new Rectangle(0, 0, 1200, 600), Color.White);
                 spriteBatch.End();
             }
             else if (FaseSpel == Speltoestand.Spel)
@@ -424,18 +380,15 @@ public void obstakelbeweging()
             {
                 GraphicsDevice.Clear(Color.Blue);
                 spriteBatch.Begin();
-                string message1 = "Blauw is de winnaar!";
-                string message2 = "Druk op 'space' om opnieuw te spelen";
+                string message1 = "Blue won!";
+                string message2 = "Press <space> to start again";
                 Vector2 textSize1 = Arial.MeasureString(message1);
                 Vector2 textSize2 = Arial.MeasureString(message2);
-                Vector2 screenCenter = new Vector2(1200 / 2, 600 / 2);
+                Vector2 screenCenter = new Vector2(graphics.PreferredBackBufferWidth / 2, graphics.PreferredBackBufferHeight / 2);
                 Vector2 position1 = screenCenter - textSize1 / 2;
                 Vector2 position2 = new Vector2(screenCenter.X - textSize2.X / 2, position1.Y + textSize1.Y + 10);
-
-
                 spriteBatch.DrawString(Arial, message1, position1, Color.White);
                 spriteBatch.DrawString(Arial, message2, position2, Color.Green);
-
                 spriteBatch.End();
             }
             //rood heeft gewonnen
@@ -443,21 +396,17 @@ public void obstakelbeweging()
             {
                 GraphicsDevice.Clear(Color.Red);
                 spriteBatch.Begin();
-                string message1 = "Rood is de winnaar!";
-                string message2 = "Druk op 'space' om opnieuw te spelen";
+                string message1 = "Red won!";
+                string message2 = "Press <space> to start again";
                 Vector2 textSize1 = Arial.MeasureString(message1);
                 Vector2 textSize2 = Arial.MeasureString(message2);
-                Vector2 screenCenter = new Vector2(1200 / 2, 600 / 2);
+                Vector2 screenCenter = new Vector2(graphics.PreferredBackBufferWidth / 2, graphics.PreferredBackBufferHeight / 2);
                 Vector2 position1 = screenCenter - textSize1 / 2;
                 Vector2 position2 = new Vector2(screenCenter.X - textSize2.X / 2, position1.Y + textSize1.Y + 10);
-
-
                 spriteBatch.DrawString(Arial, message1, position1, Color.White);
                 spriteBatch.DrawString(Arial, message2, position2, Color.Yellow);
-
                 spriteBatch.End();
             }
         }
     }
-
 }
